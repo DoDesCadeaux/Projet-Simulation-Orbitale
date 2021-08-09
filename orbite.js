@@ -35,6 +35,38 @@ function intToText(value){
     }return out;
 }
 
+//FUNCTION ORBITALE
+
+let orbit = function(p0,v0,Dt,mass){
+    const G = 6.67e-11;
+    let R = Math.sqrt(p0.x**2 + p0.y**2 + p0.z**2),
+        a  = G * mass / (R**2),
+        alpha = Math.abs(Math.atan(p0.y/p0.x)),
+        beta  = Math.abs(Math.asin(p0.z/R)), 
+        acc = bV3(
+            (!p0.x?0:a) * Math.cos(beta) * Math.cos(alpha),
+            (!p0.y?0:a) * Math.cos(beta) * Math.sin(alpha),
+            (!p0.z?0:a) * Math.sin(beta)
+        ).multiply(bV3((p0.x > 0 ? -1:1),(p0.y > 0 ? -1:1),(p0.z > 0 ? -1:1)));
+    return {
+        position : bV3(
+            p0.x + (v0.x * Dt) + (acc.x * Dt**2) ,// / 2,
+            p0.y + (v0.y * Dt) + (acc.y * Dt**2) ,// / 2,
+            p0.z + (v0.z * Dt) + (acc.z * Dt**2) // / 2
+        ),
+        speed : bV3(
+            v0.x + acc.x * Dt,
+            v0.y + acc.y * Dt,
+            v0.z + acc.z * Dt
+        ),
+        angle : {
+            a: Math.atan2(p0.y, p0.x),
+            b: Math.atan2(p0.z, p0.x),
+        }
+    };
+}
+
+// Projet Simulation orbitale par rapport à un corps stellaire, Haroun & Dorian.
 // Partie Babylon
                 window.initFunction = async function() {
                     
