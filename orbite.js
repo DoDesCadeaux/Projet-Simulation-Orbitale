@@ -65,7 +65,28 @@ let orbit = function(p0,v0,Dt,mass){
         }
     };
 }
-
+//PARAMETRES
+//Changer les valeurs ici 
+//(Attention à bien corréler la distance entre la distance orbitale max, et le rayon astral)
+let po = bV3( -10e6 , -10e6 , 0); //position de départ
+let vt = bV3( 1500,  -3500,-5200); //vitesse de départ 2
+//Donnée temporelle : 1 = temps rectiligne uniformément varié
+const Dt = 1; //temps laisser en mouvement rectiligne
+const masse_astre = 6e24;  // masse de l'astre en kg (influe directement sur la gravité/force de pesanteur)
+const speed = 100;      //accélération du temps (2 : 1 sec dans la simulation = 2 sec IRL)
+const ligne = true;     //afficher la trajectoire
+const ligneMax = 0;   // taille de la trajectoire enregistrée (sa trainée) 0 = infini !
+const distance_Maximum_orbite = 1000;        // 300e6 metres
+const distance_Minimum_orbite = 6.378137;   //rayon astre *1e6
+//variable de rendu de scene
+const sizeDivisor = bV3(1e6,1e6,1e6),lineSize = 1000,createNewLineTime = 100;
+let orbitTimer = Date.now(),lines = [],points = [],cpt = 0,
+    alpha = 0,delta = 0,ang = false,checkTurn = 0,turn = 0,
+    time = 0, security = po.divide(sizeDivisor),onetime = false, txtTime = 0;
+//objects 3d
+let satellite = BABYLON.Mesh.CreateCapsule("capsule", {radius:0.25, capSubdivisions: 6, subdivisions:6, tessellation:36, height:1.5, orientation:BABYLON.Vector3.Forward()});
+satellite.position = security;
+satellite.material = satMat;
 // Projet Simulation orbitale par rapport à un corps stellaire, Haroun & Dorian.
 // Partie Babylon
                 window.initFunction = async function() {
