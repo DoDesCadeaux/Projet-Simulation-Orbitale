@@ -87,6 +87,105 @@ let orbitTimer = Date.now(),lines = [],points = [],cpt = 0,
 let satellite = BABYLON.Mesh.CreateCapsule("capsule", {radius:0.25, capSubdivisions: 6, subdivisions:6, tessellation:36, height:1.5, orientation:BABYLON.Vector3.Forward()});
 satellite.position = security;
 satellite.material = satMat;
+
+let astre = BABYLON.Mesh.CreateSphere("Astre", 16, distance_Minimum_orbite*2 , scene);
+astre.material = new BABYLON.StandardMaterial("astreMat", scene);
+astre.material.diffuseTexture = new BABYLON.Texture("textures/terre.png", scene);
+// Axe X = Rouge
+// Axe Y = Bleu
+// Axe Z = Vert
+// 4444.1111.2222.3333.4444.5555.6666.7777
+let lX = BABYLON.Mesh.CreateLines("lx", [bV3(-1e3,0,0),bV3(1e3,0,0)] , scene);lX.color = bC3(1,0,0);
+let lY = BABYLON.Mesh.CreateLines("ly", [bV3(0,-1e3,0),bV3(0,1e3,0)] , scene);lY.color = bC3(0,1,0);
+let lZ = BABYLON.Mesh.CreateLines("lz", [bV3(0,0,-1e3),bV3(0,0,1e3)] , scene);lZ.color = bC3(0,1,1);
+//boucle du rendu de la scene
+scene.registerBeforeRender(function () {
+    let dist = bV3dist(bV3(0,0,0),security)
+    if (inBound(dist,distance_Minimum_orbite,distance_Maximum_orbite)){
+        for ( var i = 0; i < speed; i++ ){
+            let rst = orbit(po,vt,Dt,masse_astre);
+            po = rst.position;
+            vt = rst.speed; 
+            if (!ang){
+                ang = true;
+                alpha = rst.angle.a;
+                delta = rst.angle.b;
+            }else{
+                if (
+                    checkTurn <= Date.now() &&
+                    inBound(rst.angle.a,alpha-0.01,alpha+0.01) && 
+                    inBound(rst.angle.b,delta-0.01,delta+0.01)
+                ){
+                    checkTurn = Date.now()+500;
+                    turn++;
+                }
+            }
+        }
+        security = po.divide(sizeDivisor);
+        satellite.position = security;
+        if (ligne){
+            if (!points[cpt]){points[cpt]=[];}
+            if (points[cpt].length<lineSize){
+                points[cpt].push(security);
+            }else{
+                cpt++;
+                points[cpt]=[];
+                points[cpt].push(security);
+                if (points[cpt-1]){
+                    points[cpt-1].push(security);
+                    if (lines[cpt-1]){lines[cpt-1].dispose();}
+                    lines[cpt-1] = BABYLON.Mesh.CreateLines("line"+(cpt-1), points[cpt-1] , scene);
+                }
+                if (ligneMax>0){
+                    if (lines.length>=ligneMax){
+                        if (lines[lines.length-ligneMax]){lines[lines.length-ligneMax].dispose();}
+                        if (points[lines.length-ligneMax]){points[lines.length-ligneMax]=true;}
+                    }
+                    let step = 1.0/ligneMax,color= 1.0;
+                    for ( var i = 1; i <= ligneMax; i++ ){
+                        if (lines[lines.length-i]){
+                            color = among(color-step,0,1);
+                            lines[lines.length-i].color = bC3(color,color/2,0);
+                        }
+                    }
+                }
+            }
+            if (time<=Date.now()){
+                time=Date.now()+createNewLineTime;
+                if (points[cpt]){
+                    if (lines[cpt]){lines[cpt].dispose();}
+                    lines[cpt] = BABYLON.Mesh.CreateLines("line"+(cpt), points[cpt] , scene);
+                    lines[cpt].color = bC3(1,0.8,0);
+                }
+            }
+            if (txtTime<=Date.now()){
+                txtTime= Date.now()+25;
+                let vite = bV3dist(bV3(0,0,0),vt);
+                setTimeout(function() {
+                    print(
+                    "\n\nDistance : "+ intToText(floor(dist*1e3)) + " km"+
+                    "\nVitesse : "+ intToText(floor(vite)) + " m/s"+
+                    "\nItérations : "+turn
+                );
+                },0)
+            }
+        }
+    }else{
+        if (!onetime){
+            onetime= true;
+            let vite = bV3dist(bV3(0,0,0),vt);
+            print(
+                "\n\nDistance: "+ intToText(floor(dist*1e3)) +" km"+
+                "\nVitesse: "+ intToText(floor(vite)) + " m/s"+
+                "\nTour: "+turn+"\n"+
+                ((dist <= distance_Maximum_orbite)?"CRASH":"PERIAPS TO FAR")+
+                "\n orbite time: "+((Date.now()-orbitTimer)/speed)
+            );
+        }
+    }
+});
+return scene;
+}
 // Projet Simulation orbitale par rapport à un corps stellaire, Haroun & Dorian.
 // Partie Babylon
                 window.initFunction = async function() {
